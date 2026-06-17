@@ -38,6 +38,9 @@ const EMPTY_STATS: ProviderRegistrationStats = {
   skippedNoModels: 0
 };
 const OVERRIDE_ALL_PROVIDERS = "all";
+const PI_PROVIDER_ID_ALIASES: Record<string, string> = {
+  "fireworks-ai": "fireworks"
+};
 
 export function buildProviderRegistrations(
   catalog: ModelsDevCatalog,
@@ -63,27 +66,29 @@ export function buildProviderRegistrations(
       continue;
     }
 
-    const isBuiltIn = builtInProviders.has(provider.id);
+    const piProviderId = toPiProviderId(provider.id);
+    const isBuiltIn = builtInProviders.has(piProviderId);
     const isOverride =
-      options.overrideProviders.has(provider.id) || options.overrideProviders.has(OVERRIDE_ALL_PROVIDERS);
+      hasProviderId(options.overrideProviders, provider.id, piProviderId) ||
+      options.overrideProviders.has(OVERRIDE_ALL_PROVIDERS);
     if (isBuiltIn && !isOverride) {
       stats.skippedCollision += 1;
       continue;
     }
 
-    const piProviderConfig = piConfig.modelProviders.get(provider.id);
+    const piProviderConfig = getProviderConfig(piConfig, provider.id, piProviderId);
     if (piProviderConfig?.hasModels && !isOverride) {
       stats.skippedUserModels += 1;
       continue;
     }
 
-    const hasIntent = piConfig.authProviders.has(provider.id) || !!piProviderConfig || isOverride;
+    const hasIntent = hasProviderId(piConfig.authProviders, provider.id, piProviderId) || !!piProviderConfig || isOverride;
     if (!hasIntent) {
       stats.skippedNoIntent += 1;
       continue;
     }
 
-    const apiKey = resolveProviderApiKey(provider, piConfig, piProviderConfig, env);
+    const apiKey = resolveProviderApiKey(provider, piConfig, piProviderConfig, env, piProviderId);
     if (!apiKey) {
       stats.skippedMissingAuth += 1;
       continue;
@@ -95,7 +100,7 @@ export function buildProviderRegistrations(
       continue;
     }
 
-    const registration = toProviderRegistration(provider.id, provider, apiKey, baseUrl, options, piProviderConfig);
+    const registration = toProviderRegistration(piProviderId, provider, apiKey, baseUrl, options, piProviderConfig);
     if (!registration) {
       stats.skippedNoModels += 1;
       continue;
@@ -112,10 +117,11 @@ export function resolveProviderApiKey(
   provider: ModelsDevProvider,
   piConfig: Pick<PiNativeConfig, "authProviders">,
   piProviderConfig: PiModelsProviderConfig | undefined,
-  env: Environment
+  env: Environment,
+  piProviderId = toPiProviderId(provider.id)
 ): string | null {
   if (piProviderConfig?.apiKey) return piProviderConfig.apiKey;
-  if (piConfig.authProviders.has(provider.id)) return provider.env[0] ?? provider.id;
+  if (hasProviderId(piConfig.authProviders, provider.id, piProviderId)) return provider.env[0] ?? piProviderId;
 
   for (const envName of provider.env) {
     if (env[envName]) return envName;
@@ -148,4 +154,20 @@ export function interpolateEnvironment(value: string, env: Environment): string 
 
 function resolveBuiltInProviders(source: BuiltInProviderSource): Iterable<string> {
   return typeof source === "function" ? source() : source;
+}
+
+function toPiProviderId(catalogProviderId: string): string {
+  return PI_PROVIDER_ID_ALIASES[catalogProviderId] ?? catalogProviderId;
+}
+
+function hasProviderId(providerIds: Set<string>, catalogProviderId: string, piProviderId: string): boolean {
+  return providerIds.has(catalogProviderId) || providerIds.has(piProviderId);
+}
+
+function getProviderConfig(
+  piConfig: Pick<PiNativeConfig, "modelProviders">,
+  catalogProviderId: string,
+  piProviderId: string
+): PiModelsProviderConfig | undefined {
+  return piConfig.modelProviders.get(piProviderId) ?? piConfig.modelProviders.get(catalogProviderId);
 }

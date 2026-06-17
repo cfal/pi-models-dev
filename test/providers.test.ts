@@ -141,6 +141,50 @@ describe("provider registration planning", () => {
     expect(result.registrations[0].providerId).toBe("alibaba-cn");
   });
 
+  test("registers models.dev fireworks-ai as Pi fireworks", () => {
+    const fireworks = makeProvider({
+      id: "fireworks-ai",
+      name: "Fireworks AI",
+      env: ["FIREWORKS_API_KEY"],
+      api: "https://api.fireworks.ai/inference/v1"
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(fireworks),
+      makeRuntimeOptions({ overrideProviders: new Set(["fireworks"]) }),
+      makePiConfig({ authProviders: ["fireworks"] }),
+      {},
+      ["fireworks"]
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("fireworks");
+    expect(result.registrations[0].config.apiKey).toBe("FIREWORKS_API_KEY");
+  });
+
+  test("applies Pi fireworks models.json config to models.dev fireworks-ai", () => {
+    const fireworks = makeProvider({
+      id: "fireworks-ai",
+      name: "Fireworks AI",
+      env: ["FIREWORKS_API_KEY"],
+      api: "https://api.fireworks.ai/inference/v1"
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(fireworks),
+      makeRuntimeOptions({ overrideProviders: new Set(["fireworks"]) }),
+      makePiConfig({
+        modelProviders: [["fireworks", { baseUrl: "https://workspace.example/fireworks/v1" }]]
+      }),
+      { FIREWORKS_API_KEY: "secret" },
+      ["fireworks"]
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("fireworks");
+    expect(result.registrations[0].config.baseUrl).toBe("https://workspace.example/fireworks/v1");
+  });
+
   test("skips user-owned models.json providers unless explicitly overridden", () => {
     const result = buildProviderRegistrations(
       makeCatalog(),
