@@ -107,6 +107,40 @@ describe("provider registration planning", () => {
     expect(result.registrations[0].providerId).toBe("openrouter");
   });
 
+  test("overrides every provider when overrideProviders contains all", () => {
+    const openrouter = makeProvider({
+      id: "openrouter",
+      name: "OpenRouter",
+      env: ["OPENROUTER_API_KEY"],
+      npm: "@openrouter/ai-sdk-provider",
+      api: "https://openrouter.ai/api/v1"
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(openrouter),
+      makeRuntimeOptions({ overrideProviders: new Set(["all"]) }),
+      makePiConfig(),
+      { OPENROUTER_API_KEY: "secret" },
+      ["openrouter"]
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("openrouter");
+  });
+
+  test("uses all as provider intent for non-built-in providers", () => {
+    const result = buildProviderRegistrations(
+      makeCatalog(),
+      makeRuntimeOptions({ overrideProviders: new Set(["all"]) }),
+      makePiConfig(),
+      { DASHSCOPE_API_KEY: "secret" },
+      []
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("alibaba-cn");
+  });
+
   test("skips user-owned models.json providers unless explicitly overridden", () => {
     const result = buildProviderRegistrations(
       makeCatalog(),

@@ -5,6 +5,7 @@ Runtime [models.dev](https://models.dev) provider discovery for Pi.
 This Pi package fetches `https://models.dev/api.json` at startup and registers user-enabled OpenAI-compatible providers, without waiting for Pi to ship a newer generated model snapshot.
 
 By default it does not replace Pi built-in providers. Built-ins are replaced only when explicitly named in `PI_MODELS_DEV_OVERRIDE_PROVIDERS`.
+Use `PI_MODELS_DEV_OVERRIDE_PROVIDERS=all` to select every supported models.dev provider.
 
 ## What Is models.dev?
 
@@ -86,7 +87,7 @@ A provider is registered only when the extension sees user intent:
 | `models.json.providers[id]` override entry | Enables that provider and applies endpoint/request/model overrides. |
 | `PI_MODELS_DEV_OVERRIDE_PROVIDERS` | Allows selected Pi built-ins to be replaced. |
 
-Environment variables alone do not enable providers. They only satisfy auth after `auth.json`, `models.json`, or the override env var selects the provider.
+Environment variables alone do not enable providers. They only satisfy auth after `auth.json`, `models.json`, or the override env var selects the provider. The special override value `all` selects every supported models.dev provider.
 
 Generic OpenCode provider template:
 
@@ -232,7 +233,13 @@ To intentionally replace specific built-ins with models.dev entries:
 PI_MODELS_DEV_OVERRIDE_PROVIDERS=openrouter,deepseek pi --list-models
 ```
 
-Use this sparingly. It can change model lists and provider quirks for existing Pi providers.
+To select every supported models.dev provider:
+
+```bash
+PI_MODELS_DEV_OVERRIDE_PROVIDERS=all pi --list-models
+```
+
+Use overrides sparingly. They can change model lists and provider quirks for existing Pi providers. The `all` wildcard is broader than built-in replacement: it also selects non-built-in models.dev providers, which can then register when their API key environment variables are present.
 
 ## Runtime Options
 
@@ -240,7 +247,7 @@ Use this sparingly. It can change model lists and provider quirks for existing P
 | --- | --- | --- |
 | `PI_MODELS_DEV_ENABLED` | `1` | Disable with `0`. |
 | `PI_MODELS_DEV_SOURCE_URL` | `https://models.dev/api.json` | Catalog URL. |
-| `PI_MODELS_DEV_OVERRIDE_PROVIDERS` | empty | Comma-separated built-in provider IDs to replace. |
+| `PI_MODELS_DEV_OVERRIDE_PROVIDERS` | empty | Comma-separated provider IDs to select, or `all` for every supported provider. |
 | `PI_MODELS_DEV_INCLUDE_ALPHA` | `0` | Include alpha models. |
 | `PI_MODELS_DEV_INCLUDE_BETA` | `1` | Include beta models. |
 | `PI_MODELS_DEV_INCLUDE_DEPRECATED` | `0` | Include deprecated models. |

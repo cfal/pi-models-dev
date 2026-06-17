@@ -37,6 +37,7 @@ const EMPTY_STATS: ProviderRegistrationStats = {
   skippedMissingBaseUrl: 0,
   skippedNoModels: 0
 };
+const OVERRIDE_ALL_PROVIDERS = "all";
 
 export function buildProviderRegistrations(
   catalog: ModelsDevCatalog,
@@ -63,7 +64,8 @@ export function buildProviderRegistrations(
     }
 
     const isBuiltIn = builtInProviders.has(provider.id);
-    const isOverride = options.overrideProviders.has(provider.id);
+    const isOverride =
+      options.overrideProviders.has(provider.id) || options.overrideProviders.has(OVERRIDE_ALL_PROVIDERS);
     if (isBuiltIn && !isOverride) {
       stats.skippedCollision += 1;
       continue;
