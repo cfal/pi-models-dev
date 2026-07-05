@@ -36,7 +36,7 @@ export function readRuntimeOptions(env: Environment = process.env): RuntimeOptio
       sourceUrl: env.PI_MODELS_DEV_SOURCE_URL || DEFAULT_SOURCE_URL,
       timeoutMs: readPositiveInteger(env.PI_MODELS_DEV_FETCH_TIMEOUT_MS) ?? DEFAULT_FETCH_TIMEOUT_MS,
       cacheTtlMs: readPositiveInteger(env.PI_MODELS_DEV_CACHE_TTL_MS) ?? DEFAULT_CACHE_TTL_MS,
-      offline: readEnvBoolean(env.PI_MODELS_DEV_OFFLINE ?? env.PI_OFFLINE, false),
+      offline: readEnvBoolean(env.PI_MODELS_DEV_OFFLINE, false),
       cacheDir: env.PI_MODELS_DEV_CACHE_DIR
     }
   };

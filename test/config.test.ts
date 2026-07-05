@@ -13,6 +13,7 @@ describe("readRuntimeOptions", () => {
     expect(options.catalog.sourceUrl).toBe("https://models.dev/api.json");
     expect(options.catalog.timeoutMs).toBe(3_000);
     expect(options.catalog.cacheTtlMs).toBe(86_400_000);
+    expect(options.catalog.offline).toBe(false);
   });
 
   test("parses lists and booleans", () => {
@@ -41,7 +42,7 @@ describe("readRuntimeOptions", () => {
       PI_MODELS_DEV_CACHE_TTL_MS: "1000",
       PI_MODELS_DEV_CACHE_DIR: "/tmp/models-dev-cache",
       PI_MODELS_DEV_MAX_MODELS_PER_PROVIDER: "3",
-      PI_OFFLINE: "1"
+      PI_MODELS_DEV_OFFLINE: "1"
     });
 
     expect(options.catalog.sourceUrl).toBe("https://example.test/api.json");
@@ -50,6 +51,14 @@ describe("readRuntimeOptions", () => {
     expect(options.catalog.cacheDir).toBe("/tmp/models-dev-cache");
     expect(options.maxModelsPerProvider).toBe(3);
     expect(options.catalog.offline).toBe(true);
+  });
+
+  test("does not inherit Pi offline mode", () => {
+    const options = readRuntimeOptions({
+      PI_OFFLINE: "1"
+    });
+
+    expect(options.catalog.offline).toBe(false);
   });
 
   test("falls back on invalid integer values", () => {

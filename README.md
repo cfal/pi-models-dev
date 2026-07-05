@@ -263,7 +263,7 @@ PI_MODELS_DEV_OVERRIDE_PROVIDERS=fireworks pi --list-models
 | `PI_MODELS_DEV_CACHE_TTL_MS` | `86400000` | Catalog cache TTL. |
 | `PI_MODELS_DEV_FETCH_TIMEOUT_MS` | `3000` | Catalog fetch timeout. |
 | `PI_MODELS_DEV_CACHE_DIR` | Pi agent cache dir | Override cache directory. |
-| `PI_MODELS_DEV_OFFLINE` | follows `PI_OFFLINE` | Use cache only. |
+| `PI_MODELS_DEV_OFFLINE` | `0` | Use cache only. |
 | `PI_MODELS_DEV_DEBUG` | `0` | Print startup diagnostics. |
 
 ## Cache Behavior
@@ -271,6 +271,8 @@ PI_MODELS_DEV_OVERRIDE_PROVIDERS=fireworks pi --list-models
 The extension fetches models.dev during Pi startup. It caches the catalog under Pi's agent cache directory and reuses fresh cache for 24 hours by default.
 
 If the network fetch fails, stale cache is used when available. If no cache exists, startup continues and the extension registers nothing.
+
+Pi's `PI_OFFLINE` setting does not change this extension's cache policy. Use `PI_MODELS_DEV_OFFLINE=1` when models.dev discovery should be cache-only.
 
 Force cache-only mode:
 
