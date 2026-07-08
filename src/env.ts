@@ -14,6 +14,12 @@ export function readPositiveInteger(value: string | undefined): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+export function readNonNegativeInteger(value: string | undefined): number | null {
+  if (value === undefined || value.trim() === "") return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
 export function readStringSet(value: string | undefined): Set<string> | null {
   if (!value) return null;
   const entries = value

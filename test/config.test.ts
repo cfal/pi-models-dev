@@ -12,7 +12,7 @@ describe("readRuntimeOptions", () => {
     expect(options.includeDeprecated).toBe(false);
     expect(options.catalog.sourceUrl).toBe("https://models.dev/api.json");
     expect(options.catalog.timeoutMs).toBe(3_000);
-    expect(options.catalog.cacheTtlMs).toBe(86_400_000);
+    expect(options.catalog.cacheTtlMs).toBe(0);
     expect(options.catalog.offline).toBe(false);
   });
 
@@ -61,6 +61,14 @@ describe("readRuntimeOptions", () => {
     expect(options.catalog.offline).toBe(false);
   });
 
+  test("allows zero cache TTL to force revalidation", () => {
+    const options = readRuntimeOptions({
+      PI_MODELS_DEV_CACHE_TTL_MS: "0"
+    });
+
+    expect(options.catalog.cacheTtlMs).toBe(0);
+  });
+
   test("falls back on invalid integer values", () => {
     const options = readRuntimeOptions({
       PI_MODELS_DEV_FETCH_TIMEOUT_MS: "-1",
@@ -69,7 +77,7 @@ describe("readRuntimeOptions", () => {
     });
 
     expect(options.catalog.timeoutMs).toBe(3_000);
-    expect(options.catalog.cacheTtlMs).toBe(86_400_000);
+    expect(options.catalog.cacheTtlMs).toBe(0);
     expect(options.maxModelsPerProvider).toBeNull();
   });
 });

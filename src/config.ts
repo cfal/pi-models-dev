@@ -1,4 +1,4 @@
-import { type Environment, readEnvBoolean, readPositiveInteger, readStringSet } from "./env.js";
+import { type Environment, readEnvBoolean, readNonNegativeInteger, readPositiveInteger, readStringSet } from "./env.js";
 
 export interface RuntimeOptions {
   enabled: boolean;
@@ -20,7 +20,7 @@ export interface CatalogOptions {
 }
 
 const DEFAULT_SOURCE_URL = "https://models.dev/api.json";
-const DEFAULT_CACHE_TTL_MS = 86_400_000;
+const DEFAULT_CACHE_TTL_MS = 0;
 const DEFAULT_FETCH_TIMEOUT_MS = 3_000;
 
 export function readRuntimeOptions(env: Environment = process.env): RuntimeOptions {
@@ -35,7 +35,7 @@ export function readRuntimeOptions(env: Environment = process.env): RuntimeOptio
     catalog: {
       sourceUrl: env.PI_MODELS_DEV_SOURCE_URL || DEFAULT_SOURCE_URL,
       timeoutMs: readPositiveInteger(env.PI_MODELS_DEV_FETCH_TIMEOUT_MS) ?? DEFAULT_FETCH_TIMEOUT_MS,
-      cacheTtlMs: readPositiveInteger(env.PI_MODELS_DEV_CACHE_TTL_MS) ?? DEFAULT_CACHE_TTL_MS,
+      cacheTtlMs: readNonNegativeInteger(env.PI_MODELS_DEV_CACHE_TTL_MS) ?? DEFAULT_CACHE_TTL_MS,
       offline: readEnvBoolean(env.PI_MODELS_DEV_OFFLINE, false),
       cacheDir: env.PI_MODELS_DEV_CACHE_DIR
     }

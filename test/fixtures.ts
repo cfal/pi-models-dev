@@ -18,7 +18,7 @@ export function makeRuntimeOptions(overrides: RuntimeOptionsOverrides = {}): Run
     catalog: {
       sourceUrl: "https://models.dev/api.json",
       timeoutMs: 3_000,
-      cacheTtlMs: 86_400_000,
+      cacheTtlMs: 0,
       offline: false
     }
   };

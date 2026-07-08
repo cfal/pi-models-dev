@@ -3,8 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadModelsDevCatalog, type FetchLike } from "../src/catalog.js";
-import { makeRuntimeOptions } from "./fixtures.js";
-import { makeCatalog } from "./fixtures.js";
+import { makeCatalog, makeProvider, makeRuntimeOptions } from "./fixtures.js";
 
 const tempDirs: string[] = [];
 
@@ -58,6 +57,37 @@ describe("loadModelsDevCatalog", () => {
     );
 
     expect(result).toEqual(catalog);
+  });
+
+  test("cache TTL zero fetches even when cache metadata is fresh", async () => {
+    const cacheDir = await makeTempDir();
+    const cachedCatalog = makeCatalog();
+    const fetchedCatalog = makeCatalog(makeProvider({
+      id: "fresh-provider",
+      name: "Fresh Provider"
+    }));
+    await writeCache(cacheDir, cachedCatalog, {
+      etag: "\"abc\"",
+      fetchedAt: 100,
+      sourceUrl: "https://models.dev/api.json"
+    });
+
+    const fetchCalls: RequestInit[] = [];
+    const result = await loadModelsDevCatalog(
+      makeRuntimeOptions({ catalog: { cacheDir, cacheTtlMs: 0 } }).catalog,
+      {
+        fetch: async (_input, init) => {
+          fetchCalls.push(init ?? {});
+          return jsonResponse(fetchedCatalog, { etag: "\"fresh\"" });
+        },
+        now: () => 100
+      }
+    );
+
+    expect(result).toEqual(fetchedCatalog);
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0].headers).toEqual({ "If-None-Match": "\"abc\"" });
+    expect(JSON.parse(await readFile(join(cacheDir, "api.json"), "utf8"))).toEqual(fetchedCatalog);
   });
 
   test("sends ETag for stale cache and reuses cache on not modified", async () => {
