@@ -4,6 +4,7 @@ import { toPiApi, toProviderRegistration, type ProviderRegistration } from "./co
 import type { Environment } from "./env.js";
 import type { ModelsDevCatalog, ModelsDevProvider } from "./models-dev.js";
 import type { PiNativeConfig, PiModelsProviderConfig } from "./pi-config.js";
+import { getProviderSupport } from "./provider-support.js";
 
 export interface ProviderRegistrationStats {
   considered: number;
@@ -134,7 +135,7 @@ export function resolveProviderBaseUrl(
   piProviderConfig: PiModelsProviderConfig | undefined,
   env: Environment
 ): string | null {
-  const baseUrl = piProviderConfig?.baseUrl ?? provider.api;
+  const baseUrl = piProviderConfig?.baseUrl ?? provider.api ?? getProviderSupport(provider)?.defaultBaseUrl;
   return baseUrl ? interpolateEnvironment(baseUrl, env) : null;
 }
 

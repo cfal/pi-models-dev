@@ -34,6 +34,175 @@ describe("model conversion", () => {
     });
   });
 
+  test("maps xAI provider packages to OpenAI completions with xAI compat", () => {
+    const provider = makeProvider({
+      id: "xai",
+      name: "xAI",
+      env: ["XAI_API_KEY"],
+      npm: "@ai-sdk/xai",
+      api: undefined,
+      models: {
+        "grok-4.5": makeModel({
+          id: "grok-4.5",
+          name: "Grok 4.5",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["low", "medium", "high"]
+            }
+          ],
+          limit: {
+            context: 500_000,
+            output: 500_000
+          }
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "xai",
+      provider,
+      "XAI_API_KEY",
+      "https://api.x.ai/v1",
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(registration?.providerId).toBe("xai");
+    expect(registration?.config.api).toBe("openai-completions");
+    expect(model?.id).toBe("grok-4.5");
+    expect(model?.contextWindow).toBe(500_000);
+    expect(model?.maxTokens).toBe(500_000);
+    expect(model?.thinkingLevelMap).toEqual({
+      off: null,
+      minimal: "low",
+      low: "low",
+      medium: "medium",
+      high: "high"
+    });
+    expect(model?.compat).toMatchObject({
+      supportsReasoningEffort: true
+    });
+  });
+
+  test("maps declared effort values for OpenAI-compatible models", () => {
+    const provider = makeProvider({
+      id: "custom-openai",
+      name: "Custom OpenAI",
+      env: ["CUSTOM_OPENAI_API_KEY"],
+      npm: "@ai-sdk/openai-compatible",
+      api: "https://api.example.test/v1",
+      models: {
+        reasoner: makeModel({
+          id: "reasoner",
+          name: "Reasoner",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["none", "low", "medium", "high", "max"]
+            }
+          ]
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "custom-openai",
+      provider,
+      "CUSTOM_OPENAI_API_KEY",
+      provider.api!,
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(model?.thinkingLevelMap).toEqual({
+      off: "none",
+      minimal: "low",
+      low: "low",
+      medium: "medium",
+      high: "high",
+      xhigh: "max"
+    });
+    expect(model?.compat).toMatchObject({
+      supportsDeveloperRole: false,
+      supportsStore: false
+    });
+    expect(model?.compat).not.toMatchObject({
+      supportsReasoningEffort: false
+    });
+  });
+
+  test("marks unsupported lower effort levels for OpenAI-compatible models", () => {
+    const provider = makeProvider({
+      id: "alibaba-token-plan",
+      name: "Alibaba Token Plan",
+      env: ["ALIBABA_TOKEN_PLAN_API_KEY"],
+      npm: "@ai-sdk/openai-compatible",
+      api: "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+      models: {
+        "glm-5.2": makeModel({
+          id: "glm-5.2",
+          name: "GLM-5.2",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["high", "max"]
+            }
+          ]
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "alibaba-token-plan",
+      provider,
+      "ALIBABA_TOKEN_PLAN_API_KEY",
+      provider.api!,
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(model?.thinkingLevelMap).toEqual({
+      off: null,
+      minimal: null,
+      low: null,
+      medium: null,
+      high: "high",
+      xhigh: "max"
+    });
+    expect(model?.compat).not.toMatchObject({
+      supportsReasoningEffort: false
+    });
+  });
+
+  test("maps null declared effort to omitted off parameter", () => {
+    const provider = makeProvider({
+      models: {
+        reasoner: makeModel({
+          id: "reasoner",
+          name: "Reasoner",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: [null, "low", "medium", "high"]
+            }
+          ]
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "alibaba-cn",
+      provider,
+      "DASHSCOPE_API_KEY",
+      provider.api!,
+      makeRuntimeOptions()
+    );
+
+    expect(registration?.config.models?.[0]?.thinkingLevelMap).toEqual({
+      minimal: "low",
+      low: "low",
+      medium: "medium",
+      high: "high"
+    });
+  });
+
   test("filters models by tool use, status, output modality, and limits", () => {
     const options = makeRuntimeOptions();
 

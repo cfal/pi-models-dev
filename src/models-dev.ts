@@ -17,6 +17,7 @@ export interface ModelsDevModel {
   name: string;
   attachment: boolean;
   reasoning: boolean;
+  reasoning_options?: ModelsDevReasoningOption[];
   tool_call: boolean;
   structured_output?: boolean;
   temperature?: boolean;
@@ -47,6 +48,11 @@ export interface ModelsDevModel {
 }
 
 export type ModelsDevModality = "text" | "audio" | "image" | "video" | "pdf";
+
+export interface ModelsDevReasoningOption {
+  type: string;
+  values?: Array<string | null>;
+}
 
 const MODEL_STATUSES = new Set(["alpha", "beta", "deprecated"]);
 const MODALITIES = new Set(["text", "audio", "image", "video", "pdf"]);
@@ -84,6 +90,7 @@ function isModelsDevModel(modelId: string, value: unknown): value is ModelsDevMo
   if (typeof value.name !== "string" || value.name.length === 0) return false;
   if (typeof value.attachment !== "boolean") return false;
   if (typeof value.reasoning !== "boolean") return false;
+  if (value.reasoning_options !== undefined && !isReasoningOptions(value.reasoning_options)) return false;
   if (typeof value.tool_call !== "boolean") return false;
   if (value.structured_output !== undefined && typeof value.structured_output !== "boolean") return false;
   if (value.temperature !== undefined && typeof value.temperature !== "boolean") return false;
@@ -129,6 +136,20 @@ function isModelProviderOverride(value: unknown): value is NonNullable<ModelsDev
   if (value.body !== undefined && !isRecord(value.body)) return false;
   if (value.headers !== undefined && !isStringRecord(value.headers)) return false;
   return true;
+}
+
+function isReasoningOptions(value: unknown): value is ModelsDevReasoningOption[] {
+  if (!Array.isArray(value)) return false;
+  return value.every((option) => {
+    if (!isRecord(option)) return false;
+    if (typeof option.type !== "string" || option.type.length === 0) return false;
+    if (option.values !== undefined && !isReasoningOptionValues(option.values)) return false;
+    return true;
+  });
+}
+
+function isReasoningOptionValues(value: unknown): value is Array<string | null> {
+  return Array.isArray(value) && value.every((item) => item === null || typeof item === "string");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

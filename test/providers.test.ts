@@ -5,7 +5,7 @@ import {
   resolveProviderApiKey,
   resolveProviderBaseUrl
 } from "../src/providers.js";
-import { makeCatalog, makePiConfig, makeProvider, makeRuntimeOptions } from "./fixtures.js";
+import { makeCatalog, makeModel, makePiConfig, makeProvider, makeRuntimeOptions } from "./fixtures.js";
 
 describe("provider registration planning", () => {
   test("registers a missing provider selected by auth.json", () => {
@@ -183,6 +183,45 @@ describe("provider registration planning", () => {
     expect(result.registrations).toHaveLength(1);
     expect(result.registrations[0].providerId).toBe("fireworks");
     expect(result.registrations[0].config.baseUrl).toBe("https://workspace.example/fireworks/v1");
+  });
+
+  test("overrides built-in xAI with models.dev xAI using Pi's xAI base URL", () => {
+    const xai = makeProvider({
+      id: "xai",
+      name: "xAI",
+      env: ["XAI_API_KEY"],
+      npm: "@ai-sdk/xai",
+      api: undefined,
+      models: {
+        "grok-4.5": makeModel({
+          id: "grok-4.5",
+          name: "Grok 4.5",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["low", "medium", "high"]
+            }
+          ]
+        })
+      }
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(xai),
+      makeRuntimeOptions({ overrideProviders: new Set(["xai"]) }),
+      makePiConfig({ authProviders: ["xai"] }),
+      {},
+      ["xai"]
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("xai");
+    expect(result.registrations[0].config.baseUrl).toBe("https://api.x.ai/v1");
+    expect(result.registrations[0].config.apiKey).toBe("XAI_API_KEY");
+    expect(result.registrations[0].config.models?.[0]?.id).toBe("grok-4.5");
+    expect(result.registrations[0].config.models?.[0]?.compat).toMatchObject({
+      supportsReasoningEffort: true
+    });
   });
 
   test("skips user-owned models.json providers unless explicitly overridden", () => {

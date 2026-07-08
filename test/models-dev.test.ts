@@ -7,6 +7,21 @@ describe("isModelsDevCatalog", () => {
     expect(isModelsDevCatalog(makeCatalog())).toBe(true);
   });
 
+  test("accepts nullable reasoning effort values from models.dev", () => {
+    const catalog = makeCatalog();
+    catalog["alibaba-cn"].models["qwen3.5-flash"] = {
+      ...catalog["alibaba-cn"].models["qwen3.5-flash"],
+      reasoning_options: [
+        {
+          type: "effort",
+          values: [null, "low", "medium", "high"]
+        }
+      ]
+    };
+
+    expect(isModelsDevCatalog(catalog)).toBe(true);
+  });
+
   test("rejects invalid provider entries", () => {
     expect(
       isModelsDevCatalog({

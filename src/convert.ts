@@ -1,16 +1,16 @@
-import type { Api, Model } from "@earendil-works/pi-ai";
+import type { Api, Model, ThinkingLevelMap } from "@earendil-works/pi-ai";
 import type { ProviderConfig, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import type { RuntimeOptions } from "./config.js";
 import { getProviderCompat, type PiModelCompat } from "./compat.js";
 import type { ModelsDevModel, ModelsDevProvider } from "./models-dev.js";
 import type { PiModelOverride, PiModelsProviderConfig } from "./pi-config.js";
+import { getProviderSupport } from "./provider-support.js";
+import { buildThinkingLevelMap, modelDeclaresReasoningEffort } from "./reasoning-options.js";
 
 export interface ProviderRegistration {
   providerId: string;
   config: ProviderConfig;
 }
-
-const OPENAI_COMPLETIONS_API = "openai-completions" satisfies Api;
 
 export function toProviderRegistration(
   providerId: string,
@@ -26,7 +26,15 @@ export function toProviderRegistration(
   const compat = mergeCompat(getProviderCompat(provider), piProviderConfig?.compat);
   const models = Object.values(provider.models)
     .filter((model) => shouldIncludeModel(model, options))
-    .map((model) => toProviderModelConfig(model, api, compat, piProviderConfig?.modelOverrides.get(model.id)));
+    .map((model) =>
+      toProviderModelConfig(
+        model,
+        api,
+        mergeCompat(compat, getModelCompat(provider, model)),
+        piProviderConfig?.modelOverrides.get(model.id),
+        buildThinkingLevelMap(model)
+      )
+    );
 
   const cappedModels =
     options.maxModelsPerProvider === null ? models : models.slice(0, options.maxModelsPerProvider);
@@ -47,10 +55,8 @@ export function toProviderRegistration(
   };
 }
 
-export function toPiApi(provider: ModelsDevProvider): typeof OPENAI_COMPLETIONS_API | null {
-  if (provider.npm === "@ai-sdk/openai-compatible") return OPENAI_COMPLETIONS_API;
-  if (provider.npm === "@openrouter/ai-sdk-provider") return OPENAI_COMPLETIONS_API;
-  return null;
+export function toPiApi(provider: ModelsDevProvider): Api | null {
+  return getProviderSupport(provider)?.api ?? null;
 }
 
 export function shouldIncludeModel(model: ModelsDevModel, options: RuntimeOptions): boolean {
@@ -68,7 +74,8 @@ function toProviderModelConfig(
   model: ModelsDevModel,
   api: Api,
   compat: PiModelCompat,
-  override?: PiModelOverride
+  override?: PiModelOverride,
+  thinkingLevelMap?: ThinkingLevelMap
 ): ProviderModelConfig {
   const config: ProviderModelConfig = {
     id: model.id,
@@ -76,6 +83,7 @@ function toProviderModelConfig(
     api,
     baseUrl: model.provider?.api,
     reasoning: model.reasoning,
+    thinkingLevelMap,
     input: toPiInput(model),
     cost: {
       input: model.cost?.input ?? 0,
@@ -90,6 +98,16 @@ function toProviderModelConfig(
   };
 
   return applyModelOverride(config, override);
+}
+
+function getModelCompat(provider: ModelsDevProvider, model: ModelsDevModel): PiModelCompat {
+  const support = getProviderSupport(provider);
+  if (support?.enableDeclaredReasoningEffort && modelDeclaresReasoningEffort(model)) {
+    return {
+      supportsReasoningEffort: true
+    };
+  }
+  return undefined;
 }
 
 function toPiInput(model: ModelsDevModel): ("text" | "image")[] {
