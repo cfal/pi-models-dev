@@ -13,7 +13,7 @@ Use `PI_MODELS_DEV_OVERRIDE_PROVIDERS=all` to select every supported models.dev 
 
 This extension lets Pi consume that catalog at runtime. To use an OpenCode provider, look up its provider ID on models.dev and use the same ID in Pi config. For example, the OpenCode/models.dev provider ID for GitHub Models is `github-models`, so Pi model IDs become `github-models/openai/gpt-4.1`.
 
-The current extension registers models.dev providers that use an OpenAI-compatible, OpenRouter-compatible, or xAI transport. Providers that require a different native SDK are skipped until support is added.
+The current extension registers models.dev providers that use OpenAI Responses, OpenAI-compatible, OpenRouter-compatible, or xAI transport. Providers that require a different native SDK are skipped until support is added.
 
 ## Install
 

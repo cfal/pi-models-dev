@@ -224,6 +224,37 @@ describe("provider registration planning", () => {
     });
   });
 
+  test("overrides built-in OpenAI with models.dev OpenAI using Pi's OpenAI base URL", () => {
+    const openai = makeProvider({
+      id: "openai",
+      name: "OpenAI",
+      env: ["OPENAI_API_KEY"],
+      npm: "@ai-sdk/openai",
+      api: undefined,
+      models: {
+        "gpt-5.2": makeModel({
+          id: "gpt-5.2",
+          name: "GPT-5.2"
+        })
+      }
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(openai),
+      makeRuntimeOptions({ overrideProviders: new Set(["openai"]) }),
+      makePiConfig({ authProviders: ["openai"] }),
+      {},
+      ["openai"]
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("openai");
+    expect(result.registrations[0].config.api).toBe("openai-responses");
+    expect(result.registrations[0].config.baseUrl).toBe("https://api.openai.com/v1");
+    expect(result.registrations[0].config.apiKey).toBe("OPENAI_API_KEY");
+    expect(result.registrations[0].config.models?.[0]?.id).toBe("gpt-5.2");
+  });
+
   test("skips user-owned models.json providers unless explicitly overridden", () => {
     const result = buildProviderRegistrations(
       makeCatalog(),

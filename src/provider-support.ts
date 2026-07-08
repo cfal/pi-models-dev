@@ -8,8 +8,13 @@ export interface ProviderSupport {
 }
 
 export const OPENAI_COMPLETIONS_API = "openai-completions" satisfies Api;
+export const OPENAI_RESPONSES_API = "openai-responses" satisfies Api;
 
 const PROVIDER_SUPPORT_BY_PACKAGE: Record<string, ProviderSupport> = {
+  "@ai-sdk/openai": {
+    api: OPENAI_RESPONSES_API,
+    defaultBaseUrl: "https://api.openai.com/v1"
+  },
   "@ai-sdk/openai-compatible": {
     api: OPENAI_COMPLETIONS_API
   },

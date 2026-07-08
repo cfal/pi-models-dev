@@ -84,6 +84,90 @@ describe("model conversion", () => {
     });
   });
 
+  test("maps OpenRouter provider packages to OpenAI completions with OpenRouter reasoning", () => {
+    const provider = makeProvider({
+      id: "openrouter",
+      name: "OpenRouter",
+      env: ["OPENROUTER_API_KEY"],
+      npm: "@openrouter/ai-sdk-provider",
+      api: "https://openrouter.ai/api/v1",
+      models: {
+        "z-ai/glm-5.2": makeModel({
+          id: "z-ai/glm-5.2",
+          name: "GLM-5.2",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["high", "xhigh"]
+            }
+          ]
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "openrouter",
+      provider,
+      "OPENROUTER_API_KEY",
+      provider.api!,
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(registration?.config.api).toBe("openai-completions");
+    expect(model?.thinkingLevelMap).toEqual({
+      off: null,
+      minimal: null,
+      low: null,
+      medium: null,
+      high: "high",
+      xhigh: "xhigh"
+    });
+    expect(model?.compat).toMatchObject({
+      thinkingFormat: "openrouter"
+    });
+  });
+
+  test("maps OpenAI provider packages to OpenAI Responses", () => {
+    const provider = makeProvider({
+      id: "openai",
+      name: "OpenAI",
+      env: ["OPENAI_API_KEY"],
+      npm: "@ai-sdk/openai",
+      api: undefined,
+      models: {
+        "gpt-5.2": makeModel({
+          id: "gpt-5.2",
+          name: "GPT-5.2",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["none", "low", "medium", "high", "xhigh"]
+            }
+          ]
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "openai",
+      provider,
+      "OPENAI_API_KEY",
+      "https://api.openai.com/v1",
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(registration?.config.api).toBe("openai-responses");
+    expect(model?.thinkingLevelMap).toEqual({
+      off: "none",
+      minimal: "low",
+      low: "low",
+      medium: "medium",
+      high: "high",
+      xhigh: "xhigh"
+    });
+    expect(model?.compat).toBeUndefined();
+  });
+
   test("maps declared effort values for OpenAI-compatible models", () => {
     const provider = makeProvider({
       id: "custom-openai",
