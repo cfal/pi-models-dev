@@ -40,7 +40,8 @@ const EMPTY_STATS: ProviderRegistrationStats = {
 };
 const OVERRIDE_ALL_PROVIDERS = "all";
 const PI_PROVIDER_ID_ALIASES: Record<string, string> = {
-  "fireworks-ai": "fireworks"
+  "fireworks-ai": "fireworks",
+  togetherai: "together"
 };
 
 export function buildProviderRegistrations(

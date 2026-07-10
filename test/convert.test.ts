@@ -187,7 +187,7 @@ describe("model conversion", () => {
       }
     });
     const registration = toProviderRegistration(
-      "togetherai",
+      "together",
       provider,
       "TOGETHER_API_KEY",
       "https://api.together.ai/v1",
@@ -195,7 +195,7 @@ describe("model conversion", () => {
     );
 
     const model = registration?.config.models?.[0];
-    expect(registration?.providerId).toBe("togetherai");
+    expect(registration?.providerId).toBe("together");
     expect(registration?.config.api).toBe("openai-completions");
     expect(model?.id).toBe("zai-org/GLM-5.2");
     expect(model?.contextWindow).toBe(262_144);
@@ -205,6 +205,123 @@ describe("model conversion", () => {
       maxTokensField: "max_tokens",
       supportsDeveloperRole: false
     });
+  });
+
+  test("maps Cerebras provider packages to OpenAI completions with reasoning effort", () => {
+    const provider = makeProvider({
+      id: "cerebras",
+      name: "Cerebras",
+      env: ["CEREBRAS_API_KEY"],
+      npm: "@ai-sdk/cerebras",
+      api: undefined,
+      models: {
+        "llama-4-scout-17b-16e-instruct": makeModel({
+          id: "llama-4-scout-17b-16e-instruct",
+          name: "Llama 4 Scout 17B 16E",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["low", "medium", "high"]
+            }
+          ],
+          limit: { context: 64_000, output: 64_000 }
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "cerebras",
+      provider,
+      "CEREBRAS_API_KEY",
+      "https://api.cerebras.ai/v1",
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(registration?.providerId).toBe("cerebras");
+    expect(registration?.config.api).toBe("openai-completions");
+    expect(model?.id).toBe("llama-4-scout-17b-16e-instruct");
+    expect(model?.contextWindow).toBe(64_000);
+    expect(model?.maxTokens).toBe(64_000);
+    expect(model?.thinkingLevelMap).toEqual({
+      off: null,
+      minimal: "low",
+      low: "low",
+      medium: "medium",
+      high: "high"
+    });
+    expect(model?.compat).toMatchObject({
+      supportsReasoningEffort: true
+    });
+  });
+
+  test("maps DeepInfra provider packages to OpenAI completions", () => {
+    const provider = makeProvider({
+      id: "deepinfra",
+      name: "Deep Infra",
+      env: ["DEEPINFRA_API_KEY"],
+      npm: "@ai-sdk/deepinfra",
+      api: undefined,
+      models: {
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct": makeModel({
+          id: "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+          name: "Llama 4 Scout 17B",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["low", "medium", "high", "xhigh"]
+            }
+          ],
+          limit: { context: 524_288, output: 32_768 }
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "deepinfra",
+      provider,
+      "DEEPINFRA_API_KEY",
+      "https://api.deepinfra.com/v1/openai",
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(registration?.providerId).toBe("deepinfra");
+    expect(registration?.config.api).toBe("openai-completions");
+    expect(model?.id).toBe("meta-llama/Llama-4-Scout-17B-16E-Instruct");
+    expect(model?.contextWindow).toBe(524_288);
+    expect(model?.compat).toMatchObject({
+      supportsReasoningEffort: true
+    });
+  });
+
+  test("maps Venice provider packages to OpenAI completions", () => {
+    const provider = makeProvider({
+      id: "venice",
+      name: "Venice AI",
+      env: ["VENICE_API_KEY"],
+      npm: "venice-ai-sdk-provider",
+      api: undefined,
+      models: {
+        "llama-3.3-70b": makeModel({
+          id: "llama-3.3-70b",
+          name: "Llama 3.3 70B",
+          limit: { context: 16_000, output: 4_096 }
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "venice",
+      provider,
+      "VENICE_API_KEY",
+      "https://api.venice.ai/api/v1",
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(registration?.providerId).toBe("venice");
+    expect(registration?.config.api).toBe("openai-completions");
+    expect(model?.id).toBe("llama-3.3-70b");
+    expect(model?.contextWindow).toBe(16_000);
+    expect(model?.maxTokens).toBe(4_096);
   });
 
   test("maps declared effort values for OpenAI-compatible models", () => {

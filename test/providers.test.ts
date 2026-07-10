@@ -270,7 +270,7 @@ describe("provider registration planning", () => {
     expect(result.stats.skippedUserModels).toBe(1);
   });
 
-  test("registers Together AI as a supported provider", () => {
+  test("overrides Pi together with models.dev Together AI", () => {
     const togetherai = makeProvider({
       id: "togetherai",
       name: "Together AI",
@@ -288,18 +288,118 @@ describe("provider registration planning", () => {
 
     const result = buildProviderRegistrations(
       makeCatalog(togetherai),
+      makeRuntimeOptions({ overrideProviders: new Set(["all"]) }),
+      makePiConfig({ authProviders: ["together"] }),
+      {},
+      ["together"]
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("together");
+    expect(result.registrations[0].config.api).toBe("openai-completions");
+    expect(result.registrations[0].config.baseUrl).toBe("https://api.together.ai/v1");
+    expect(result.registrations[0].config.apiKey).toBe("TOGETHER_API_KEY");
+    expect(result.registrations[0].config.models?.[0]?.id).toBe("zai-org/GLM-5.2");
+  });
+
+  test("registers Cerebras as a supported provider with reasoning effort", () => {
+    const cerebras = makeProvider({
+      id: "cerebras",
+      name: "Cerebras",
+      env: ["CEREBRAS_API_KEY"],
+      npm: "@ai-sdk/cerebras",
+      api: undefined,
+      models: {
+        "llama-4-scout-17b-16e-instruct": makeModel({
+          id: "llama-4-scout-17b-16e-instruct",
+          name: "Llama 4 Scout 17B 16E",
+          reasoning_options: [
+            {
+              type: "effort",
+              values: ["low", "medium", "high"]
+            }
+          ],
+          limit: { context: 64_000, output: 64_000 }
+        })
+      }
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(cerebras),
       makeRuntimeOptions(),
-      makePiConfig({ authProviders: ["togetherai"] }),
+      makePiConfig({ authProviders: ["cerebras"] }),
       {},
       []
     );
 
     expect(result.registrations).toHaveLength(1);
-    expect(result.registrations[0].providerId).toBe("togetherai");
+    expect(result.registrations[0].providerId).toBe("cerebras");
+    expect(result.registrations[0].config.baseUrl).toBe("https://api.cerebras.ai/v1");
+    expect(result.registrations[0].config.models?.[0]?.compat).toMatchObject({
+      supportsReasoningEffort: true
+    });
+  });
+
+  test("registers DeepInfra as a supported provider", () => {
+    const deepinfra = makeProvider({
+      id: "deepinfra",
+      name: "Deep Infra",
+      env: ["DEEPINFRA_API_KEY"],
+      npm: "@ai-sdk/deepinfra",
+      api: undefined,
+      models: {
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct": makeModel({
+          id: "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+          name: "Llama 4 Scout 17B",
+          limit: { context: 524_288, output: 32_768 }
+        })
+      }
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(deepinfra),
+      makeRuntimeOptions(),
+      makePiConfig({ authProviders: ["deepinfra"] }),
+      {},
+      []
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("deepinfra");
     expect(result.registrations[0].config.api).toBe("openai-completions");
-    expect(result.registrations[0].config.baseUrl).toBe("https://api.together.ai/v1");
-    expect(result.registrations[0].config.apiKey).toBe("TOGETHER_API_KEY");
-    expect(result.registrations[0].config.models?.[0]?.id).toBe("zai-org/GLM-5.2");
+    expect(result.registrations[0].config.baseUrl).toBe("https://api.deepinfra.com/v1/openai");
+    expect(result.registrations[0].config.apiKey).toBe("DEEPINFRA_API_KEY");
+  });
+
+  test("registers Venice as a supported provider", () => {
+    const venice = makeProvider({
+      id: "venice",
+      name: "Venice AI",
+      env: ["VENICE_API_KEY"],
+      npm: "venice-ai-sdk-provider",
+      api: undefined,
+      models: {
+        "llama-3.3-70b": makeModel({
+          id: "llama-3.3-70b",
+          name: "Llama 3.3 70B",
+          limit: { context: 16_000, output: 4_096 }
+        })
+      }
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(venice),
+      makeRuntimeOptions(),
+      makePiConfig({ authProviders: ["venice"] }),
+      {},
+      []
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("venice");
+    expect(result.registrations[0].config.api).toBe("openai-completions");
+    expect(result.registrations[0].config.baseUrl).toBe("https://api.venice.ai/api/v1");
+    expect(result.registrations[0].config.apiKey).toBe("VENICE_API_KEY");
   });
 
   test("skips unsupported provider packages", () => {

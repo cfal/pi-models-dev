@@ -107,7 +107,7 @@ pi --list-models
 
 Use the provider ID exactly as shown on models.dev. After registration, select models in Pi as `<provider-id>/<model-id>`.
 
-Exception: models.dev names Fireworks `fireworks-ai`, but Pi uses `fireworks`. This extension registers models.dev Fireworks models under Pi's `fireworks` provider ID, so use `fireworks` in `auth.json`, `models.json`, and `PI_MODELS_DEV_OVERRIDE_PROVIDERS`.
+Exceptions: models.dev names Fireworks `fireworks-ai` and Together AI `togetherai`, while Pi uses `fireworks` and `together`. This extension registers those models.dev providers under Pi's provider IDs, so use `fireworks` or `together` in `auth.json`, `models.json`, and `PI_MODELS_DEV_OVERRIDE_PROVIDERS`.
 
 ## API Keys
 
@@ -243,10 +243,10 @@ PI_MODELS_DEV_OVERRIDE_PROVIDERS=all pi --list-models
 
 Use overrides sparingly. They can change model lists and provider quirks for existing Pi providers. The `all` wildcard is broader than built-in replacement: it also selects non-built-in models.dev providers, which can then register when their API key environment variables are present.
 
-For Fireworks, use Pi's built-in provider ID:
+For Fireworks and Together AI, use Pi's built-in provider IDs:
 
 ```bash
-PI_MODELS_DEV_OVERRIDE_PROVIDERS=fireworks pi --list-models
+PI_MODELS_DEV_OVERRIDE_PROVIDERS=fireworks,together pi --list-models
 ```
 
 ## Runtime Options

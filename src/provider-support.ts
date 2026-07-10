@@ -11,14 +11,21 @@ export const OPENAI_COMPLETIONS_API = "openai-completions" satisfies Api;
 export const OPENAI_RESPONSES_API = "openai-responses" satisfies Api;
 
 const PROVIDER_SUPPORT_BY_PACKAGE: Record<string, ProviderSupport> = {
+  "@ai-sdk/cerebras": {
+    api: OPENAI_COMPLETIONS_API,
+    defaultBaseUrl: "https://api.cerebras.ai/v1",
+    enableDeclaredReasoningEffort: true
+  },
+  "@ai-sdk/deepinfra": {
+    api: OPENAI_COMPLETIONS_API,
+    defaultBaseUrl: "https://api.deepinfra.com/v1/openai",
+    enableDeclaredReasoningEffort: true
+  },
   "@ai-sdk/openai": {
     api: OPENAI_RESPONSES_API,
     defaultBaseUrl: "https://api.openai.com/v1"
   },
   "@ai-sdk/openai-compatible": {
-    api: OPENAI_COMPLETIONS_API
-  },
-  "@openrouter/ai-sdk-provider": {
     api: OPENAI_COMPLETIONS_API
   },
   "@ai-sdk/togetherai": {
@@ -28,6 +35,14 @@ const PROVIDER_SUPPORT_BY_PACKAGE: Record<string, ProviderSupport> = {
   "@ai-sdk/xai": {
     api: OPENAI_COMPLETIONS_API,
     defaultBaseUrl: "https://api.x.ai/v1",
+    enableDeclaredReasoningEffort: true
+  },
+  "@openrouter/ai-sdk-provider": {
+    api: OPENAI_COMPLETIONS_API
+  },
+  "venice-ai-sdk-provider": {
+    api: OPENAI_COMPLETIONS_API,
+    defaultBaseUrl: "https://api.venice.ai/api/v1",
     enableDeclaredReasoningEffort: true
   }
 };
