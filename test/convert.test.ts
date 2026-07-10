@@ -168,6 +168,45 @@ describe("model conversion", () => {
     expect(model?.compat).toBeUndefined();
   });
 
+  test("maps Together AI provider packages to OpenAI completions with together compat", () => {
+    const provider = makeProvider({
+      id: "togetherai",
+      name: "Together AI",
+      env: ["TOGETHER_API_KEY"],
+      npm: "@ai-sdk/togetherai",
+      api: undefined,
+      models: {
+        "zai-org/GLM-5.2": makeModel({
+          id: "zai-org/GLM-5.2",
+          name: "GLM-5.2",
+          limit: {
+            context: 262_144,
+            output: 164_000
+          }
+        })
+      }
+    });
+    const registration = toProviderRegistration(
+      "togetherai",
+      provider,
+      "TOGETHER_API_KEY",
+      "https://api.together.ai/v1",
+      makeRuntimeOptions()
+    );
+
+    const model = registration?.config.models?.[0];
+    expect(registration?.providerId).toBe("togetherai");
+    expect(registration?.config.api).toBe("openai-completions");
+    expect(model?.id).toBe("zai-org/GLM-5.2");
+    expect(model?.contextWindow).toBe(262_144);
+    expect(model?.maxTokens).toBe(164_000);
+    expect(model?.compat).toMatchObject({
+      thinkingFormat: "together",
+      maxTokensField: "max_tokens",
+      supportsDeveloperRole: false
+    });
+  });
+
   test("maps declared effort values for OpenAI-compatible models", () => {
     const provider = makeProvider({
       id: "custom-openai",

@@ -270,6 +270,38 @@ describe("provider registration planning", () => {
     expect(result.stats.skippedUserModels).toBe(1);
   });
 
+  test("registers Together AI as a supported provider", () => {
+    const togetherai = makeProvider({
+      id: "togetherai",
+      name: "Together AI",
+      env: ["TOGETHER_API_KEY"],
+      npm: "@ai-sdk/togetherai",
+      api: undefined,
+      models: {
+        "zai-org/GLM-5.2": makeModel({
+          id: "zai-org/GLM-5.2",
+          name: "GLM-5.2",
+          limit: { context: 262_144, output: 164_000 }
+        })
+      }
+    });
+
+    const result = buildProviderRegistrations(
+      makeCatalog(togetherai),
+      makeRuntimeOptions(),
+      makePiConfig({ authProviders: ["togetherai"] }),
+      {},
+      []
+    );
+
+    expect(result.registrations).toHaveLength(1);
+    expect(result.registrations[0].providerId).toBe("togetherai");
+    expect(result.registrations[0].config.api).toBe("openai-completions");
+    expect(result.registrations[0].config.baseUrl).toBe("https://api.together.ai/v1");
+    expect(result.registrations[0].config.apiKey).toBe("TOGETHER_API_KEY");
+    expect(result.registrations[0].config.models?.[0]?.id).toBe("zai-org/GLM-5.2");
+  });
+
   test("skips unsupported provider packages", () => {
     const provider = makeProvider({
       npm: "@ai-sdk/google",

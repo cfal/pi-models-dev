@@ -21,6 +21,10 @@ const PROVIDER_SUPPORT_BY_PACKAGE: Record<string, ProviderSupport> = {
   "@openrouter/ai-sdk-provider": {
     api: OPENAI_COMPLETIONS_API
   },
+  "@ai-sdk/togetherai": {
+    api: OPENAI_COMPLETIONS_API,
+    defaultBaseUrl: "https://api.together.ai/v1"
+  },
   "@ai-sdk/xai": {
     api: OPENAI_COMPLETIONS_API,
     defaultBaseUrl: "https://api.x.ai/v1",
